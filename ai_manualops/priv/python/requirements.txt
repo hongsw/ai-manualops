@@ -1,0 +1,8 @@
+numpy>=1.24.0
+pandas>=2.0.0
+pydantic>=2.0.0
+python-erlastic>=2.1.0
+pytest>=7.3.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0 
