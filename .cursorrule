@@ -1,0 +1,315 @@
+# AI-ManualOps 코딩 규칙 및 가이드라인
+
+## 1. 파일 구조 및 네이밍 규칙
+
+### 디렉토리 구조
+- `ai-agent-architecture/`: 아키텍처 관련 문서 및 다이어그램
+- `src/`: 소스 코드
+  - `agents/`: AI 에이전트 구현
+  - `mcp/`: MCP 클라이언트 및 서버
+  - `dimension/`: 차원 변환 모델
+  - `infrastructure/`: 인프라 관련 코드
+  - `utils/`: 유틸리티 함수
+- `test/`: 테스트 코드
+- `docs/`: 문서
+
+### 파일 네이밍
+- 소스 파일: snake_case (예: `dimension_converter.ex`)
+- 테스트 파일: `{원본 파일명}_test.ex` (예: `dimension_converter_test.ex`)
+- 문서 파일: kebab-case (예: `mcp-overview.md`)
+
+## 2. 코드 스타일
+
+### Elixir 코드 스타일
+- 들여쓰기: 2칸 공백
+- 최대 줄 길이: 100자
+- 함수 이름: snake_case
+- 모듈 이름: PascalCase
+- 상수: SCREAMING_SNAKE_CASE
+
+### 주석 및 문서화
+- 모든 공개 함수에 `@doc` 및 `@spec` 추가
+- 복잡한 로직에 인라인 주석 추가
+- 모듈 수준 문서화 필수
+
+## 3. 아키텍처 규칙
+
+### MCP 통합
+- 모든 외부 도구 접근은 MCP를 통해 수행
+- MCP 서버는 독립적인 프로세스로 실행
+- MCP 클라이언트는 재사용 가능한 모듈로 구현
+
+### 에이전트 설계
+- 단일 책임 원칙 준수
+- 에이전트 간 통신은 메시지 기반
+- 상태 관리는 GenServer 패턴 사용
+
+### 차원 변환
+- 모든 변환은 파이프라인으로 구성
+- 각 변환 단계는 독립적으로 테스트 가능해야 함
+- 변환 결과는 항상 검증 단계를 거쳐야 함
+
+## 4. 테스트 규칙
+
+### 단위 테스트
+- 모든 공개 함수에 대한 단위 테스트 작성
+- 테스트 커버리지 80% 이상 유지
+- 모의 객체(mock) 사용 시 명시적으로 표시
+
+### 통합 테스트
+- 주요 워크플로우에 대한 통합 테스트 작성
+- 실제 외부 서비스와의 통합 테스트 포함
+- 성능 테스트는 별도 스위트로 구성
+
+## 5. 성능 및 확장성
+
+### 성능 최적화
+- 병렬 처리가 가능한 작업은 Task.async 사용
+- 메모리 사용량 모니터링 및 최적화
+- 캐싱 전략 명시적 정의
+
+### 확장성 고려사항
+- 수평적 확장을 고려한 설계
+- 상태 공유는 분산 저장소 사용
+- 부하 분산 전략 구현
+
+## 6. 보안 규칙
+
+### 인증 및 권한
+- 모든 외부 API 호출은 인증 필요
+- 권한 검사는 명시적으로 구현
+- 민감한 정보는 환경 변수로 관리
+
+### 데이터 보안
+- 사용자 데이터 암호화 저장
+- 로그에서 민감 정보 마스킹
+- 정기적인 보안 감사 수행
+
+## 7. 배포 및 운영
+
+### 배포 프로세스
+- CI/CD 파이프라인 구성
+- 배포 전 자동화된 테스트 실행
+- 롤백 전략 구현
+
+### 모니터링
+- OpenTelemetry 통합
+- 주요 메트릭 정의 및 수집
+- 알림 임계값 설정
+
+## 8. 버전 관리
+
+### Git 워크플로우
+- 기능 브랜치: feature/
+- 버그 수정: fix/
+- 릴리스: release/
+- 커밋 메시지: [타입] 간결한 설명
+
+### 버전 번호
+- 시맨틱 버저닝 준수 (MAJOR.MINOR.PATCH)
+- 변경 로그 자동 생성
+- 릴리스 노트 작성
+
+## 9. Elixir-Python 통합 규칙
+
+### 통합 아키텍처
+- Elixir: 분산 처리, 상태 관리, MCP 서버 호스팅
+- Python: AI 모델, 데이터 처리, MCP 클라이언트
+- 통신: JSON-RPC, STDIO/SSE(MCP), HTTP/Port
+
+### Elixir-Python 인터페이스
+- `Pythonx` 라이브러리를 사용하여 Python 인터프리터를 임베드할 수 있으며, 동일한 OS 프로세스에서 Python 코드를 실행하고 데이터 변환을 편리하게 수행할 수 있습니다.
+- Python의 전역 인터프리터 락(GIL)으로 인해 다중 스레드에서 Python 코드를 동시에 실행하는 데 제한이 있을 수 있습니다. 따라서, 다중 프로세스 환경에서는 `Port`를 사용하여 독립적인 Python 프로세스를 관리하는 방법이 적합할 수 있습니다.
+- `python-erlastic` 라이브러리를 활용하여 Elixir와 Python 간의 직렬화 및 역직렬화를 수행하고, 포트를 통해 데이터를 주고받을 수 있습니다.
+- 애플리케이션의 요구 사항에 따라 `Pythonx`를 사용하여 Python 인터프리터를 임베드하거나, `Port`와 `python-erlastic`을 활용하여 독립적인 Python 프로세스를 관리하는 방안을 고려할 수 있습니다.
+- Pythonx와 Elixir 간의 스트리밍 통신:
+  - Server-Sent Events (SSE)를 사용한 서버-클라이언트 스트리밍
+  - HTTP POST 요청을 통한 클라이언트-서버 통신
+  - Transport 인터페이스 구현:
+    - start(): 메시지 처리 시작
+    - send(): JSON-RPC 메시지 전송
+    - close(): 연결 종료
+    - 콜백: onclose, onerror, onmessage
+  - 오류 처리:
+    - 연결 오류
+    - 메시지 파싱 오류
+    - 프로토콜 오류
+    - 네트워크 타임아웃
+    - 리소스 정리
+  - 모범 사례:
+    - 연결 수명 주기 관리
+    - 적절한 타임아웃 설정
+    - 메시지 검증
+    - 디버깅을 위한 이벤트 로깅
+    - 재연결 로직 구현
+    - 메시지 큐의 백프레셔 처리
+    - 연결 상태 모니터링
+
+### 데이터 교환
+- JSON 형식으로 데이터 직렬화/역직렬화
+- 대용량 데이터는 스트리밍 방식으로 처리
+- 바이너리 데이터는 Base64 인코딩 사용
+
+### 오류 처리
+- Python 예외는 Elixir 에러로 변환
+- 프로세스 충돌 시 자동 재시작 메커니즘
+- 타임아웃 설정 및 처리
+
+### 성능 최적화
+- Python 프로세스 풀링으로 리소스 관리
+- 캐싱 전략으로 반복 계산 최소화
+- 비동기 처리로 블로킹 방지
+
+### 보안 고려사항
+- Python 코드 실행 환경 격리
+- 입력 데이터 검증 및 살균
+- 리소스 사용량 제한
+
+### 테스트 전략
+- Elixir-Python 통합 테스트 작성
+- Python 코드 단위 테스트
+- 성능 및 안정성 테스트
+
+### 코드 스니펫
+
+#### MCP SSE 서버 구현
+```python
+from mcp.server.sse import SseServerTransport
+from starlette.applications import Starlette
+from starlette.routing import Route
+
+app = Server("example-server")
+sse = SseServerTransport("/messages")
+
+async def handle_sse(scope, receive, send):
+    async with sse.connect_sse(scope, receive, send) as streams:
+        await app.run(streams[0], streams[1], app.create_initialization_options())
+
+async def handle_messages(scope, receive, send):
+    await sse.handle_post_message(scope, receive, send)
+
+starlette_app = Starlette(
+    routes=[
+        Route("/sse", endpoint=handle_sse),
+        Route("/messages", endpoint=handle_messages, methods=["POST"]),
+    ]
+)
+```
+
+#### Transport 인터페이스 추가 예시
+```python
+@contextmanager
+async def example_transport(scope: Scope, receive: Receive, send: Send):
+    try:
+        # Create streams for bidirectional communication
+        read_stream_writer, read_stream = anyio.create_memory_object_stream(0)
+        write_stream, write_stream_reader = anyio.create_memory_object_stream(0)
+
+        async def message_handler():
+            try:
+                async with read_stream_writer:
+                    # Message handling logic
+                    pass
+            except Exception as exc:
+                logger.error(f"Failed to handle message: {exc}")
+                raise exc
+
+        async with anyio.create_task_group() as tg:
+            tg.start_soon(message_handler)
+            try:
+                # Yield streams for communication
+                yield read_stream, write_stream
+            except Exception as exc:
+                logger.error(f"Transport error: {exc}")
+                raise exc
+            finally:
+                tg.cancel_scope.cancel()
+                await write_stream.aclose()
+                await read_stream.aclose()
+    except Exception as exc:
+        logger.error(f"Failed to initialize transport: {exc}")
+        raise exc 
+```
+
+## 10. 벡터 데이터베이스 규칙
+
+### 벡터 데이터베이스 선택
+- Qdrant: 필터링 및 페이로드 기능이 강화된 벡터 데이터베이스
+
+### 데이터 모델링
+- 임베딩 벡터: 고정 크기 (예: 1536차원)
+- 메타데이터: 필터링 및 검색에 사용되는 속성
+- 페이로드: 원본 데이터 또는 참조 정보
+- 인덱스: HNSW, IVF, PQ 등 검색 최적화 인덱스
+
+### 검색 및 필터링
+- 의미 기반 검색: 코사인 유사도, 유클리드 거리 등
+- 하이브리드 검색: 벡터 유사도 + 키워드 검색
+- 필터링: 메타데이터 기반 필터링
+- 페이징 및 정렬: 효율적인 결과 페이지 처리
+
+### 성능 최적화
+- 인덱스 최적화: 데이터 크기 및 검색 패턴에 맞는 인덱스 선택
+- 배치 처리: 대량의 벡터 삽입/업데이트
+- 캐싱: 자주 검색되는 결과 캐싱
+- 샤딩: 대규모 데이터셋 분산 처리
+
+### 확장성 고려사항
+- 수평적 확장: 샤딩 및 복제
+- 백업 및 복구: 정기적인 백업 및 복구 전략
+- 마이그레이션: 스키마 변경 및 데이터 마이그레이션
+- 버전 관리: 임베딩 모델 및 인덱스 버전 관리
+
+### 통합 패턴
+- Elixir 통합: Ecto 어댑터 또는 직접 HTTP 클라이언트
+- Python 통합: 공식 클라이언트 라이브러리
+- MCP 통합: 벡터 데이터베이스 MCP 서버 구현
+- 이벤트 기반 업데이트: 변경 사항 실시간 반영
+
+### 모니터링 및 관리
+- 성능 메트릭: 쿼리 지연 시간, 처리량, 정확도
+- 리소스 사용량: 메모리, CPU, 디스크 사용량
+- 알림: 임계값 기반 알림 설정
+- 로깅: 쿼리 및 오류 로깅
+
+### Qdrant 사용 가이드
+
+#### 설치 및 설정
+- Docker를 사용하여 Qdrant 서버 실행
+- Python 클라이언트 라이브러리 설치: `pip install qdrant-client`
+- Elixir 클라이언트 라이브러리 설치: `mix deps.get` (Qdrant Elixir 클라이언트 추가)
+
+#### 데이터 모델링
+- 컬렉션 생성: 고정 크기 임베딩 벡터 및 메타데이터 필드 정의
+- 페이로드 스키마: 검색 및 필터링에 사용되는 속성 정의
+- 인덱스 설정: HNSW, IVF, PQ 등 검색 최적화 인덱스 구성
+
+#### 검색 및 필터링
+- 의미 기반 검색: 코사인 유사도, 유클리드 거리 등 사용
+- 하이브리드 검색: 벡터 유사도 + 키워드 검색 구현
+- 필터링: 메타데이터 기반 필터링 적용
+- 페이징 및 정렬: 효율적인 결과 페이지 처리
+
+#### 성능 최적화
+- 인덱스 최적화: 데이터 크기 및 검색 패턴에 맞는 인덱스 선택
+- 배치 처리: 대량의 벡터 삽입/업데이트
+- 캐싱: 자주 검색되는 결과 캐싱
+- 샤딩: 대규모 데이터셋 분산 처리
+
+#### 확장성 고려사항
+- 수평적 확장: 샤딩 및 복제
+- 백업 및 복구: 정기적인 백업 및 복구 전략
+- 마이그레이션: 스키마 변경 및 데이터 마이그레이션
+- 버전 관리: 임베딩 모델 및 인덱스 버전 관리
+
+#### 통합 패턴
+- Elixir 통합: Ecto 어댑터 또는 직접 HTTP 클라이언트
+- Python 통합: 공식 클라이언트 라이브러리
+- MCP 통합: 벡터 데이터베이스 MCP 서버 구현
+- 이벤트 기반 업데이트: 변경 사항 실시간 반영
+
+#### 모니터링 및 관리
+- 성능 메트릭: 쿼리 지연 시간, 처리량, 정확도
+- 리소스 사용량: 메모리, CPU, 디스크 사용량
+- 알림: 임계값 기반 알림 설정
+- 로깅: 쿼리 및 오류 로깅 
